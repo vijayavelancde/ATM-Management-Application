@@ -16,7 +16,7 @@ static {
 }
 	
 
-public static void Loadcash(int cash) {
+public synchronized static void Loadcash(int cash) {
     if (cash % 100000 != 0) {
         System.out.println("Cash must be in multiples of 100000");
         return;
@@ -28,7 +28,7 @@ public static void Loadcash(int cash) {
     System.out.println("Cash imported Successfully");
 }
 
-public static int GetATMBalance() {
+public synchronized static int GetATMBalance() {
 	int total = 0;
     for (Map.Entry<Integer, Integer> entry : denominations.entrySet()) {
         total += entry.getKey() * entry.getValue();
@@ -36,7 +36,7 @@ public static int GetATMBalance() {
     return total;
 }
 
-public static boolean deductFromATMBalance(int amount) {
+public synchronized static boolean deductFromATMBalance(int amount) {
     int remaining = amount;
     HashMap<Integer, Integer> tempDenominations = new HashMap<>(denominations);
 
