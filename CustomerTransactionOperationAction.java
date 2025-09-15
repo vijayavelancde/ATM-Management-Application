@@ -4,18 +4,16 @@ import java.util.HashMap;
 
 public class CustomerTransactionOperationAction {
 	
-	 public void addTransaction(int accountNumber, TransactionDataOperations txn, HashMap<Integer, ArrayList<TransactionDataOperations>> miniStatementMap) {
-              ArrayList<TransactionDataOperations> transactions = miniStatementMap.getOrDefault(accountNumber, new ArrayList<>());
-                  transactions.add(txn);
-
-                if (transactions.size() > 5) {
-                       transactions.remove(0);  
-                      }
-
+    public synchronized void addTransaction(int accountNumber, TransactionDataOperations txn, HashMap<Integer, ArrayList<TransactionDataOperations>> miniStatementMap) {
+          ArrayList<TransactionDataOperations> transactions = miniStatementMap.getOrDefault(accountNumber, new ArrayList<>());
+          transactions.add(txn);
+          if (transactions.size() > 5) {
+              transactions.remove(0);  
+             }
              miniStatementMap.put(accountNumber, transactions);
-}
+         }
 
-  public void CashWithdrawal(CustomerDataOperations getUserObj, int ATMBalance, int Withdrawal_Amount, 
+  public synchronized void CashWithdrawal(CustomerDataOperations getUserObj, int ATMBalance, int Withdrawal_Amount, 
         HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
         int User_balance = getUserObj.getUserBalance();
         if (ATMBalance >= Withdrawal_Amount && User_balance >= Withdrawal_Amount) {
@@ -37,8 +35,8 @@ public class CustomerTransactionOperationAction {
         addTransaction(getUserObj.getUserAccNo(), customerdetails, MiniStatementDetails);
     }
 
-    public void Transfer_Cash(CustomerDataOperations getUserObj, CustomerDataOperations TransferObj, int Transfer_amount, int ATM_Balance, 
-                              HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
+    public synchronized void Transfer_Cash(CustomerDataOperations getUserObj, CustomerDataOperations TransferObj, int Transfer_amount, int ATM_Balance, 
+        HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
         if (ATM_Balance < Transfer_amount) {
             System.out.println("Regret to inform the amount is requested is currently not available");
             System.out.println("Please try after sometime");
@@ -74,7 +72,7 @@ public class CustomerTransactionOperationAction {
         addTransaction(TransferObj.getUserAccNo(), C2, MiniStatementDetails);
     }
 
-    public void MiniStatement(CustomerDataOperations UserObj, HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
+    public synchronized void MiniStatement(CustomerDataOperations UserObj, HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
         System.out.println("Account Number: " + UserObj.getUserAccNo());
         System.out.println("Account Holder: " + UserObj.getUserName());
         System.out.println("Account Balance: " + UserObj.getUserBalance());
