@@ -1,28 +1,25 @@
 package ATM;
 
 import java.util.ArrayList;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class CustomerDataOperations {
+
     private int Acc_No;
     private String Account_User_Name;
     private int Account_Pin;
     private int Account_Balance;
     private int Transaction_ID = 0;
 
-    private final ReentrantLock lock = new ReentrantLock();
-
-    CustomerDataOperations(int Accno, String Username, int Pin, int AccountBalance){
+    CustomerDataOperations(int Accno, String Username, int Pin, int AccountBalance) {
         this.Acc_No = Accno;
         this.Account_User_Name = Username;
         this.Account_Pin = Pin;
         this.Account_Balance = AccountBalance;
     }
 
-    CustomerDataOperations(){
-    }
+    CustomerDataOperations() {}
 
-    public int getUserAccNo () {
+    public int getUserAccNo() {
         return Acc_No;
     }
 
@@ -30,32 +27,17 @@ public class CustomerDataOperations {
         return Account_User_Name;
     }
 
-    public int getUserBalance() {
-        lock.lock();
-        try {
-            return Account_Balance;
-        } finally {
-            lock.unlock();
-        }
+    public synchronized int getUserBalance() {
+        return Account_Balance;
     }
 
-    public void setUserbalance(int Updatedbalance) {
-        lock.lock();
-        try {
-            Account_Balance = Updatedbalance;
-        } finally {
-            lock.unlock();
-        }
+    public synchronized void setUserbalance(int Updatedbalance) {
+        Account_Balance = Updatedbalance;
     }
 
-    public int IncrementTransactionID() {
-        lock.lock();
-        try {
-            Transaction_ID++;
-            return Transaction_ID;
-        } finally {
-            lock.unlock();
-        }
+    public synchronized int IncrementTransactionID() {
+        Transaction_ID++;
+        return Transaction_ID;
     }
 
     public static void ShowUserdetails(ArrayList<CustomerDataOperations> UserDetails) {
@@ -68,24 +50,24 @@ public class CustomerDataOperations {
     }
 
     public static boolean UserAccountValidation(int accno, int pin, ArrayList<CustomerDataOperations> UserDetails) {
-        for(CustomerDataOperations details: UserDetails) {
-            if(details.Acc_No == accno && details.Account_Pin == pin) {
-                 System.out.println("Logged-in Successfully");
-                 return true;
+        for (CustomerDataOperations details : UserDetails) {
+            if (details.Acc_No == accno && details.Account_Pin == pin) {
+                System.out.println("Logged-in Successfully");
+                return true;
             }
         }
         System.out.println("Invalid Credentials");
         return false;
     }
 
-    public static CustomerDataOperations getUserObjusingAccountNumber(int accountnumber, ArrayList<CustomerDataOperations>UserDetails) {
+    public static CustomerDataOperations getUserObjusingAccountNumber(int accountnumber, ArrayList<CustomerDataOperations> UserDetails) {
         CustomerDataOperations UserObj = null;
-        for(CustomerDataOperations data: UserDetails) {
-            if(data.Acc_No == accountnumber) {
+        for (CustomerDataOperations data : UserDetails) {
+            if (data.Acc_No == accountnumber) {
                 UserObj = data;
             }
         }
-        if(UserObj != null) {
+        if (UserObj != null) {
             return UserObj;
         } else {
             System.out.println("Invalid Account Number");
