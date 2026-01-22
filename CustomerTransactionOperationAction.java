@@ -2,60 +2,81 @@ package ATM;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CustomerTransactionOperationAction {
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock lock = new ReentrantLock(true);
 
     public void addTransaction(int accountNumber, TransactionDataOperations txn,
                                HashMap<Integer, ArrayList<TransactionDataOperations>> miniStatementMap) {
+
         lock.lock();
         try {
             ArrayList<TransactionDataOperations> transactions =
                     miniStatementMap.getOrDefault(accountNumber, new ArrayList<>());
+
             transactions.add(txn);
             if (transactions.size() > 5) {
                 transactions.remove(0);
             }
+
             miniStatementMap.put(accountNumber, transactions);
         } finally {
             lock.unlock();
         }
     }
 
-    public void CashWithdrawal(CustomerDataOperations getUserObj, int ATMBalance, int Withdrawal_Amount,
+    public void CashWithdrawal(CustomerDataOperations user, int atmBalance, int amount,
                                HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
-        lock.lock();
-        try {
-            int User_balance = getUserObj.getUserBalance();
-            if (ATMBalance >= Withdrawal_Amount && User_balance >= Withdrawal_Amount) {
-                if (ATMstorage.deductFromATMBalance(Withdrawal_Amount)) {
-                    int Revised_balance = User_balance - Withdrawal_Amount;
-                    getUserObj.setUserbalance(Revised_balance);
-                    System.out.println(Withdrawal_Amount + " has been withdrawned from your account");
-                    System.out.println("The current balance in your account is " + getUserObj.getUserBalance());
 
-                    int TransactionID = getUserObj.IncrementTransactionID();
-                    String TransactionRemarks = "Debited " + Withdrawal_Amount + " Ruppees from ATM";
-                    TransactionDataOperations customerdetails =
-                            new TransactionDataOperations(TransactionID, TransactionRemarks, "Debit", Withdrawal_Amount);
-                    addTransaction(getUserObj.getUserAccNo(), customerdetails, MiniStatementDetails);
-                } else {
-                    System.out.println("Unable to dispense amount due to denomination shortage.");
-                }
-            } else {
-                System.out.println("Regret to inform the requested amount is currently not available");
-                System.out.println("Please try after sometime");
+        try {
+            if (!lock.tryLock(2, TimeUnit.SECONDS)) {
+                System.out.println("ATM is busy, please retry...");
+                return;
             }
-        } finally {
-            lock.unlock();
+
+            try {
+                int User_balance = user.getUserBalance();
+                if (atmBalance >= amount && User_balance >= amount) {
+
+                    if (ATMstorage.deductFromATMBalance(amount)) {
+                        int Revised_balance = User_balance - amount;
+                        user.setUserbalance(Revised_balance);
+
+                        System.out.println(amount + " has been withdrawned from your account");
+                        System.out.println("The current balance in your account is " + user.getUserBalance());
+
+                        int TransactionID = user.IncrementTransactionID();
+                        String TransactionRemarks = "Debited " + amount + " Ruppees from ATM";
+
+                        TransactionDataOperations customerdetails =
+                                new TransactionDataOperations(TransactionID, TransactionRemarks, "Debit", amount);
+
+                        addTransaction(user.getUserAccNo(), customerdetails, MiniStatementDetails);
+                    } else {
+                        System.out.println("Unable to dispense amount due to denomination shortage.");
+                    }
+
+                } else {
+                    System.out.println("Regret to inform the requested amount is currently not available");
+                    System.out.println("Please try after sometime");
+                }
+
+            } finally {
+                lock.unlock();
+            }
+
+        } catch (InterruptedException e) {
+            System.out.println("Transaction cancelled by user.");
         }
     }
 
     public void Transfer_Cash(CustomerDataOperations getUserObj, CustomerDataOperations TransferObj,
                               int Transfer_amount, int ATM_Balance,
                               HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
+
         lock.lock();
         try {
             if (ATM_Balance < Transfer_amount) {
@@ -83,13 +104,17 @@ public class CustomerTransactionOperationAction {
             System.out.println(Transfer_amount + " Ruppees has been sent to " + TransferObj.getUserName());
 
             int SenderTransactionID = getUserObj.IncrementTransactionID();
-            TransactionDataOperations C1 = new TransactionDataOperations(SenderTransactionID,
-                    "Funds transfered to Acc " + TransferObj.getUserAccNo(), "Debit", Transfer_amount);
+            TransactionDataOperations C1 =
+                    new TransactionDataOperations(SenderTransactionID,
+                            "Funds transfered to Acc " + TransferObj.getUserAccNo(), "Debit", Transfer_amount);
+
             addTransaction(getUserObj.getUserAccNo(), C1, MiniStatementDetails);
 
             int ReceiverTransactionID = TransferObj.IncrementTransactionID();
-            TransactionDataOperations C2 = new TransactionDataOperations(ReceiverTransactionID,
-                    "Funds transfered from Acc " + getUserObj.getUserAccNo(), "Credit", Transfer_amount);
+            TransactionDataOperations C2 =
+                    new TransactionDataOperations(ReceiverTransactionID,
+                            "Funds transfered from Acc " + getUserObj.getUserAccNo(), "Credit", Transfer_amount);
+
             addTransaction(TransferObj.getUserAccNo(), C2, MiniStatementDetails);
 
         } finally {
@@ -99,6 +124,7 @@ public class CustomerTransactionOperationAction {
 
     public void MiniStatement(CustomerDataOperations UserObj,
                               HashMap<Integer, ArrayList<TransactionDataOperations>> MiniStatementDetails) {
+
         lock.lock();
         try {
             System.out.println("Account Number: " + UserObj.getUserAccNo());
@@ -118,6 +144,7 @@ public class CustomerTransactionOperationAction {
             } else {
                 System.out.println("No transactions available.");
             }
+
         } finally {
             lock.unlock();
         }
